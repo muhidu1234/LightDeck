@@ -18,7 +18,7 @@ if str(APP_DIR) not in sys.path:
 from effect_base import Effect  # noqa: E402
 from driver_base import load_drivers  # noqa: E402
 
-VERSION = "1.0"
+VERSION = "1.1"
 
 
 def _user_dir():
