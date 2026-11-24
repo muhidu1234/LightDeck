@@ -18,7 +18,7 @@ if str(APP_DIR) not in sys.path:
 from effect_base import Effect  # noqa: E402
 from driver_base import load_drivers  # noqa: E402
 
-VERSION = "1.2"
+VERSION = "1.21"
 
 
 def _user_dir():
@@ -890,6 +890,8 @@ class Engine:
 
     # ---------- main loop ----------
     def start(self):
+        if getattr(self, "_thread", None) is not None and self._thread.is_alive():
+            return                                   # already running (e.g. the window was swapped)
         try:
             import ctypes
             ctypes.windll.winmm.timeBeginPeriod(1)   # precise frame timing on Windows

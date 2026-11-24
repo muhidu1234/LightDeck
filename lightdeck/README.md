@@ -56,6 +56,16 @@ python -m PyInstaller --noconfirm --windowed --name LightDeck --icon lightdeck\l
 then copy `dist\LightDeck\LightDeck.exe` and `dist\LightDeck\_internal` over the installed ones
 (or simply run `python build/make_package.py`, which also copies the `effects` and `drivers` folders).
 
+## Two windows
+- **Night City** (default since 1.21): animated window with a menu on the left - *Lights* (every
+  light with a live preview, on/off, Blink), *Light settings* (effect and its settings for All lights
+  or one light), *Preview*, *Effects* (gallery with live samples; click one to use it) and *Settings*.
+- **Classic**: the original window with every tool (LED count, splitting, Wi-Fi lights, recording).
+  Night City > Settings > *Classic window*; back with Settings > Window style > *Switch to the new look*.
+  The choice is saved as `"ui"` in config.json.
+
+The rest of this section describes the Classic window.
+
 ## Use it
 - **All lights**: the effect every light uses by default.
 - **Click a light** (for example an ARGB header). Its settings are grouped in cards; cards with

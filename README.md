@@ -2,7 +2,7 @@
 
 A lightweight RGB controller for Windows: one small app that runs animated effects across all your
 lights at once (motherboard, ARGB fans and strips, graphics card, RAM, keyboards, mice and Wi-Fi lights),
-with a Night City neon look.
+with an animated Night City neon look (rain, skyline, live previews of every light).
 
 [OpenRGB](https://openrgb.org) does most of the hardware talking; LightDeck runs the effects and the
 window, and adds its own drivers for devices OpenRGB doesn't cover.

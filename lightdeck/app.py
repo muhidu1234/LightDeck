@@ -96,9 +96,9 @@ T = dict(THEMES[DEFAULT_THEME])   # the active theme
 
 
 class App:
-    def __init__(self, root):
+    def __init__(self, root, engine=None):
         self.root = root
-        self.engine = Engine()
+        self.engine = engine or Engine()
         self.engine.start()
         self.sel = GLOBAL          # selected tree item id
         self.tree_sig = None
@@ -1464,6 +1464,16 @@ class App:
                          "into a request for support.", wrap=440, pady=(0, 6))
         ttk.Button(body, text="Report a device", command=self.make_report).pack(anchor="w")
 
+        # --- Window style ---
+        body = self._section(box, "Window style")
+        self._hint(body, "The Night City window: a side bar with pages, live previews and animations. "
+                         "LightDeck restarts in it (your lights blink once).", wrap=440, pady=(0, 6))
+
+        def new_look():
+            import nightcity
+            nightcity.switch_ui(self, "nightcity")
+        ttk.Button(body, text="Switch to the new look", command=new_look).pack(anchor="w")
+
         ttk.Button(box, text="Close", command=win.destroy).pack(anchor="e", pady=(18, 0))
         self._decorate(box)
         win.update_idletasks()
@@ -1718,7 +1728,20 @@ def main():
     except Exception:
         pass
     root = tk.Tk()
-    App(root)
+    engine = Engine()
+    if engine.cfg.get("ui", "nightcity") == "nightcity":
+        try:
+            import nightcity
+            nightcity.NightCity(root, engine)
+        except Exception:                      # never leave the user without a window: fall back to classic
+            import traceback
+            traceback.print_exc()
+            for w in root.winfo_children():
+                w.destroy()
+            engine.cfg["ui"] = "classic"
+            App(root, engine)
+    else:
+        App(root, engine)
     root.mainloop()
 
 
