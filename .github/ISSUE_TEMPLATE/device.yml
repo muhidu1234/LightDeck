@@ -1,0 +1,63 @@
+name: Device support request
+description: A device with RGB lighting that LightDeck can't control (or controls badly).
+title: "[Device] "
+labels: ["new device"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for helping LightDeck support more devices!
+        In LightDeck, click **Report a device** (Settings, or the "Found, not controllable" page).
+        It copies a short report: paste it below. It only lists device names, USB IDs and problems.
+  - type: input
+    id: model
+    attributes:
+      label: Device model
+      description: Brand and exact model, as on the box or the maker's website.
+      placeholder: e.g. Corsair K70 RGB PRO
+    validations:
+      required: true
+  - type: dropdown
+    id: kind
+    attributes:
+      label: What kind of device is it?
+      options:
+        - Keyboard
+        - Mouse
+        - Headset
+        - Mousepad / desk mat
+        - Motherboard / RGB header
+        - Graphics card
+        - RAM
+        - Fan / cooler / hub
+        - Light strip / lamp (Wi-Fi)
+        - Something else
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: What happens?
+      description: Not listed at all? Listed but doesn't light up? Wrong colours or wrong order?
+    validations:
+      required: true
+  - type: textarea
+    id: report
+    attributes:
+      label: LightDeck device report
+      description: Paste the report here (it was copied when you clicked Report a device).
+      render: text
+    validations:
+      required: true
+  - type: textarea
+    id: recording
+    attributes:
+      label: Device recording (optional, very helpful)
+      description: |
+        On the device's page in LightDeck, "Add support for it" can record what the device's own lighting app sends.
+        Drag the saved `device-recording-....txt` file here. It never contains your key presses.
+  - type: input
+    id: app
+    attributes:
+      label: The device's own lighting app (if any)
+      placeholder: e.g. Corsair iCUE 5, Razer Synapse 4

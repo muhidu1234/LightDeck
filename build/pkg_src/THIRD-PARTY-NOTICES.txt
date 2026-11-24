@@ -1,0 +1,35 @@
+LightDeck 1.0 - third-party software
+====================================
+
+LightDeck itself is licensed under the GNU General Public License v3 (GPL-3.0.txt), because it
+includes openrgb-python (GPL v3). The complete LightDeck source code is in the "source" folder of
+the download.
+
+Included software:
+
+1. OpenRGB 1.1 (folder: OpenRGB\)
+   Copyright the OpenRGB contributors. License: GNU GPL v2 (GPL-2.0.txt).
+   Unmodified official Windows 64-bit portable build (OpenRGB_1.1_Windows_64_8e16de2.zip).
+   Source code: https://codeberg.org/OpenRGB/OpenRGB/src/tag/release_1.1
+   Website: https://openrgb.org
+   It bundles Qt 6, hidapi, libusb and PawnIO modules, under their own licenses - see the
+   OpenRGB source repository.
+
+2. openrgb-python 0.3.8 (inside LightDeck.exe)
+   Copyright jath03 and contributors. License: GNU GPL v3 (GPL-3.0.txt).
+   Source code: https://github.com/jath03/openrgb-python
+
+3. Python 3.15 runtime (inside LightDeck.exe)
+   Copyright Python Software Foundation. License: PSF License Agreement.
+   https://docs.python.org/3/license.html
+
+4. Tcl/Tk (inside LightDeck.exe, used for the window)
+   License: BSD-style Tcl/Tk license. https://www.tcl-lang.org/software/tcltk/license.html
+
+5. PyInstaller bootloader (LightDeck.exe launcher)
+   License: GNU GPL v2 or later with an exception that allows distributing the resulting program
+   under any license. https://pyinstaller.org/en/stable/license.html
+
+The RK N80 support in LightDeck uses the HID messages that RK's own software sends to the keyboard,
+recorded for interoperability. "Royal Kludge" / "RK" and other product names belong to their owners;
+LightDeck is not affiliated with them.

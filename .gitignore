@@ -1,0 +1,13 @@
+__pycache__/
+build/dist/
+build/work/
+build/package/
+build/*.spec
+*.pcap
+# personal: never share these
+CLAUDE.local.md
+lightdeck/config.json
+lightdeck/device-report.txt
+lightdeck/device-recording-*.txt
+device-report.txt
+device-recording-*.txt

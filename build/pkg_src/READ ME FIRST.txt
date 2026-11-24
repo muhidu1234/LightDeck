@@ -1,0 +1,41 @@
+LightDeck 1.0 - one app for all your RGB
+=========================================
+
+INSTALL
+1. Extract this whole zip (right-click > Extract All). Don't run it from inside the zip.
+2. Double-click "Install LightDeck".
+   It installs for your Windows user only (no admin needed) and adds Start menu + Desktop shortcuts.
+3. Windows may show "Windows protected your PC" because the app isn't code-signed.
+   Click "More info" > "Run anyway". (Same for the installer window if it appears.)
+
+FIRST START
+- Close other RGB apps first: SignalRGB, iCUE, Armoury Crate, G HUB lighting, Mystic Light,
+  RGB Fusion, NZXT CAM... Only one app can control the lights at a time.
+- LightDeck starts OpenRGB (included) and Windows asks to allow it as administrator.
+  Click Yes so RAM and some motherboards work. If OpenRGB warns about PawnIO, install the free
+  PawnIO driver from https://pawnio.eu for RAM / SMBus lighting.
+- A welcome window explains the rest (ARGB header LED counts, effects, themes).
+
+WHAT WORKS
+- Anything OpenRGB 1.1 supports: most motherboards, ARGB headers, RAM, GPUs, many keyboards,
+  mice and LED controllers. List: https://openrgb.org/devices_1.1.html
+- Devices without a live lighting mode still follow the effect (slower, or as one color).
+- Windows Dynamic Lighting devices (many newer keyboards, mice and headsets) - built in.
+  Turn Windows' own Dynamic Lighting off for them (Settings > Personalization > Dynamic Lighting).
+- RK N80 keyboard (over its USB cable) - built in.
+- Wi-Fi lights: WLED, Philips Hue, Nanoleaf, Govee - Settings > Wi-Fi lights > Search my network.
+- Razer and SteelSeries devices through Razer Synapse (Chroma) or SteelSeries GG, while those run.
+- Devices nothing supports are listed in the app under "Found, not controllable".
+  "Report a device" there (or in Settings) makes a short list to send so support can be added.
+
+UPDATE / REMOVE
+- Update: extract the new version and run "Install LightDeck" again. Your settings are kept.
+- Remove: double-click "Uninstall LightDeck".
+
+REQUIREMENTS
+Windows 10 or 11, 64-bit. Nothing else - Python and OpenRGB are included.
+
+LICENSE
+LightDeck is free software under the GNU GPL v3 (see LightDeck\LICENSES\). Its full source code is
+in the "source" folder. It includes OpenRGB (GNU GPL v2) and other open-source parts - see
+LightDeck\LICENSES\THIRD-PARTY-NOTICES.txt.
