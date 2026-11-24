@@ -34,9 +34,13 @@ Everything you might edit lives next to `LightDeck.exe`: `effects\` (your effect
   then **Add**. Hue and Nanoleaf need a button press to pair (the window says which); Govee needs
   "LAN Control" on in the Govee Home app. Not found? Type its IP address. When LightDeck closes,
   Hue and Nanoleaf go back to what they showed before.
-- **Razer and SteelSeries devices** that OpenRGB doesn't drive are lit through the maker's own app
-  (Razer Synapse with Chroma, or SteelSeries GG) while that app is running. These two are written
-  from the makers' documentation and haven't been tried on a real device yet.
+- **Devices OpenRGB doesn't drive** are lit through the maker's own app while it runs: Logitech G HUB
+  (or Logitech Gaming Software), ASUS Armoury Crate (Aura SDK), Corsair iCUE (put Corsair's free
+  `iCUESDK.x64_2019.dll` from github.com/CorsairOfficial/cue-sdk in the `drivers` folder; iCUE's
+  "Enable SDK" setting on), Razer Synapse (Chroma) and SteelSeries GG. Written from the makers'
+  documentation; not yet tried on real devices.
+- **Other RGB apps** that fight LightDeck (SignalRGB, Mystic Light, RGB Fusion, NZXT CAM...) show a
+  warning in the status bar; *Settings > Other RGB apps* lists what's running and can close them.
 - **Rescan devices** checks everything right away.
 - **A device still doesn't work?** **Report a device** (Settings, or *Found, not controllable*)
   saves and copies a short list of what LightDeck sees (names, USB IDs, problems; IP addresses and

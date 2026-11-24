@@ -10,12 +10,13 @@ import tkinter.font as tkfont
 
 import time
 
+import apps
 import hud
 import report
 import usbcapture
 import startup
 from effect_base import PALETTE_PRESETS
-from engine import EFFECTS_DIR, FIRST_RUN, FPS_MAX, FPS_MIN, GLOBAL, VERSION, Engine
+from engine import DRIVERS_DIR, EFFECTS_DIR, FIRST_RUN, FPS_MAX, FPS_MIN, GLOBAL, VERSION, Engine
 
 FOLLOW = "Same as All lights"
 # settings text uses a clean, readable font; headings and buttons keep the theme's font
@@ -1351,6 +1352,10 @@ class App:
         eng = self.engine
         fps = f"  ·  {eng.actual_fps:.0f} fps" if eng.client else ""
         err = f"  ·  ⚠ {eng.last_error}" if eng.last_error else ""
+        clash = apps.conflicts()
+        if clash:
+            names = " and ".join(n for n, _, _ in clash[:2])
+            err = f"  ·  ⚠ Close {names}: it fights LightDeck over the lights (Settings > Other RGB apps)" + err
         self.status_text = eng.status + fps + err
         if eng.reload_if_changed():
             self.tree_sig = None
@@ -1388,8 +1393,9 @@ class App:
         ttk.Label(box, text="Welcome to LightDeck", style="Head.TLabel").pack(anchor="w")
         self._tick(box)
         tips = [
-            ("Close other RGB apps", "SignalRGB, iCUE, Armoury Crate, G HUB lighting, Mystic Light, RGB Fusion, "
-                                     "NZXT CAM... Only one app can drive the lights - they will fight."),
+            ("Other RGB apps", "LightDeck works through G HUB, Armoury Crate, iCUE, Razer Synapse and SteelSeries GG. "
+                               "Close the others (SignalRGB, Mystic Light, RGB Fusion, NZXT CAM...): two apps "
+                               "driving the same lights fight. Settings > Other RGB apps shows what's running."),
             ("Allow OpenRGB as administrator", "Windows asks when LightDeck starts it. Say Yes so RAM and some "
                                                "motherboards work. If OpenRGB warns about PawnIO, install the free "
                                                "PawnIO driver from pawnio.eu for RAM/SMBus lighting."),
@@ -1449,6 +1455,7 @@ class App:
         msg.pack(anchor="w")
 
         self._wifi_section(box, win)
+        self._other_apps_section(box, win)
 
         # --- Help add a device ---
         body = self._section(box, "Help add a device")
@@ -1463,6 +1470,61 @@ class App:
         x = self.root.winfo_rootx() + (self.root.winfo_width() - win.winfo_width()) // 2
         y = self.root.winfo_rooty() + 60
         win.geometry(f"+{max(0, x)}+{max(0, y)}")
+
+    # ---------- Other RGB apps (in Settings) ----------
+    def _other_apps_section(self, parent, win):
+        """Which RGB apps are running, and whether LightDeck works through them or they must be closed."""
+        body = self._section(parent, "Other RGB apps", key="other_apps", open_=bool(apps.conflicts()))
+        self._hint(body, "LightDeck works through G HUB, Armoury Crate, iCUE, Razer Synapse and SteelSeries GG for "
+                         "devices OpenRGB can't drive, so those may stay open. Apps marked \"close it\" fight "
+                         "LightDeck over the lights: they flicker between both.", wrap=440, pady=(0, 6))
+        rows = ttk.Frame(body, style="Panel.TFrame")
+        rows.pack(fill="x")
+        msg = ttk.Label(body, text="", style="Hint.TLabel", wraplength=440, justify="left")
+        state = {"sig": None}
+
+        def close(name):
+            ok = apps.close_app(name)
+            msg.config(text=f"Closed {name}." if ok else
+                       f"Windows didn't let LightDeck close {name}. Close it from its tray icon "
+                       f"(next to the clock) or turn its lighting off.", style="Hint.TLabel" if ok else "Err.TLabel")
+            state["sig"] = None
+
+        def draw():
+            if not rows.winfo_exists():
+                return
+            running = apps.running_rgb_apps()
+            corsair_file = any(getattr(c, "__name__", "") == "CorsairICue" for c in self.engine.driver_classes) and \
+                any((p / "iCUESDK.x64_2019.dll").is_file() for p in (DRIVERS_DIR, DRIVERS_DIR.parent))
+            sig = (tuple(running), corsair_file)
+            if sig != state["sig"]:
+                state["sig"] = sig
+                for w in rows.winfo_children():
+                    w.destroy()
+                if not running:
+                    ttk.Label(rows, text="No other RGB app is running.", style="Form.TLabel").pack(anchor="w")
+                for name, how, tip in running:
+                    row = ttk.Frame(rows, style="Panel.TFrame")
+                    row.pack(fill="x", pady=2)
+                    word = {"bridge": "works with LightDeck", "ok": "fine", "close": "close it"}[how]
+                    ttk.Label(row, text=name, style="Form.TLabel").pack(side="left")
+                    ttk.Label(row, text=f"  ·  {word}", style="Err.TLabel" if how == "close" else "Hint.TLabel"
+                              ).pack(side="left")
+                    if how == "close":
+                        ttk.Button(row, text="Close it", command=lambda n=name: close(n)).pack(side="right")
+                    self._hint(rows, tip, wrap=440, pady=(0, 4))
+                corsair = ("found: Corsair devices can go through iCUE." if corsair_file else
+                           "not added. To drive Corsair devices through iCUE, get iCUESDK.x64_2019.dll from "
+                           "Corsair's free iCUE SDK (github.com/CorsairOfficial/cue-sdk, Releases, redist folder) "
+                           "and put it in the drivers folder. Or quit iCUE: OpenRGB drives most Corsair devices.")
+                self._hint(rows, f"Corsair iCUE file: {corsair}", wrap=440, pady=(6, 0))
+                self._decorate(rows)
+            win.after(3000, draw)
+
+        draw()
+        ttk.Button(body, text="Open drivers folder", command=lambda: os.startfile(DRIVERS_DIR)).pack(
+            anchor="w", pady=(8, 0))
+        msg.pack(anchor="w")
 
     # ---------- Wi-Fi lights (in Settings) ----------
     def _wifi_section(self, parent, win):

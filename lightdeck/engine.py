@@ -18,7 +18,7 @@ if str(APP_DIR) not in sys.path:
 from effect_base import Effect  # noqa: E402
 from driver_base import load_drivers  # noqa: E402
 
-VERSION = "1.1"
+VERSION = "1.2"
 
 
 def _user_dir():
@@ -636,6 +636,8 @@ class Engine:
             ogb_ids = set()                    # devices OpenRGB already drives: leave them to it
             for info in self.ogb_info:
                 ogb_ids |= winhid.ids_in(info.get("location", ""))
+            from driver_base import Driver
+            Driver.openrgb_ids = ogb_ids
             with self.lock:
                 running = list(self.extras) + [e for e, _ in self._new_extras]
             for cls in list(self.driver_classes):

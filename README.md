@@ -12,13 +12,25 @@ window, and adds its own drivers for devices OpenRGB doesn't cover.
   Devices without a fast "Direct" mode still work at a gentler pace.
 - **Windows Dynamic Lighting devices** (HID LampArray): many newer keyboards, mice, headsets and strips.
 - **Wi-Fi lights**: WLED, Philips Hue, Nanoleaf and Govee (LAN control), found by *Search my network*.
-- **Through the maker's own app**: Razer Chroma and SteelSeries GG (GameSense), when those apps are running.
+- **Through the maker's own app**: Logitech G HUB, ASUS Armoury Crate (Aura), Corsair iCUE, Razer Synapse
+  (Chroma) and SteelSeries GG (GameSense), when those apps are running.
 - **Its own drivers**, e.g. the RK N80 keyboard, made from a recording of what the keyboard's own app sends.
 
 ## Install
 Download the latest `LightDeck-<version>-Windows.zip` from **Releases**, extract it and run
-`Install LightDeck.cmd`. Close SignalRGB, iCUE, Armoury Crate lighting and similar apps first:
-only one app can drive the lights at a time. Full instructions are in `READ ME FIRST.txt` inside the zip.
+`Install LightDeck.cmd`. Full instructions are in `READ ME FIRST.txt` inside the zip.
+
+## Other RGB apps
+| App | With LightDeck |
+|---|---|
+| Logitech G HUB / Logitech Gaming Software | Works through it (keyboards per key, other devices one color) |
+| ASUS Armoury Crate (Aura) | Works through it, unless OpenRGB already drives your ASUS lights |
+| Corsair iCUE | Works through it once Corsair's free `iCUESDK.x64_2019.dll` is in the `drivers` folder; or quit iCUE and OpenRGB drives most Corsair devices |
+| Razer Synapse, SteelSeries GG | Works through them |
+| SignalRGB, MSI Center / Mystic Light, Gigabyte RGB Fusion, ASRock Polychrome, NZXT CAM, Lian Li L-Connect, Thermaltake, Cooler Master, HyperX NGENUITY, Roccat Swarm, Alienware Command Center, Hue Sync, Artemis, Aurora | Close it (or turn its lighting off): two apps driving the same lights fight |
+
+LightDeck warns when one of the "close it" apps is running; *Settings > Other RGB apps* shows what is
+running and can close it for you.
 
 ## A device doesn't work?
 1. In LightDeck, click **Report a device** (in Settings, or on the *Found, not controllable* page).

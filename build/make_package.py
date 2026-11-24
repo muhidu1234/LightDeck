@@ -22,7 +22,8 @@ version = re.search(r'VERSION = "([^"]+)"', (src / "engine.py").read_text(encodi
 cmd = [sys.executable, "-m", "PyInstaller", "--noconfirm", "--windowed", "--name", "LightDeck",
        "--icon", str(src / "lightdeck.ico"), "--distpath", str(build / "dist"), "--workpath", str(build / "work"),
        "--specpath", str(build), "--paths", str(src)]
-for m in ("openrgb", "devscan", "winhid", "driver_base", "nethelp", "report", "usbcapture", "hud", "effect_base"):
+for m in ("openrgb", "devscan", "winhid", "driver_base", "nethelp", "report", "usbcapture", "apps", "comhelp", "winreg", "queue",
+          "hud", "effect_base"):
     cmd += ["--hidden-import", m]
 cmd.append(str(src / "app.py"))
 print("building LightDeck.exe ...")
@@ -54,7 +55,8 @@ shutil.copy2(build / "pkg_src" / "THIRD-PARTY-NOTICES.txt", lic)
 s = pkg / "source"
 (s / "effects").mkdir(parents=True)
 (s / "drivers").mkdir()
-for f in ("app.py", "engine.py", "hud.py", "effect_base.py", "driver_base.py", "winhid.py", "nethelp.py", "report.py", "usbcapture.py", "devscan.py", "startup.py", "lightdeck.ico", "README.md"):
+for f in ("app.py", "engine.py", "hud.py", "effect_base.py", "driver_base.py", "winhid.py", "nethelp.py", "report.py", "usbcapture.py", "apps.py", "comhelp.py", "devscan.py", "startup.py", "lightdeck.ico",
+          "README.md"):
     shutil.copy2(src / f, s / f)
 for sub in ("effects", "drivers"):
     for f in (src / sub).glob("*.py"):

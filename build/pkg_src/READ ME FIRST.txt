@@ -24,7 +24,11 @@ WHAT WORKS
   Turn Windows' own Dynamic Lighting off for them (Settings > Personalization > Dynamic Lighting).
 - RK N80 keyboard (over its USB cable) - built in.
 - Wi-Fi lights: WLED, Philips Hue, Nanoleaf, Govee - Settings > Wi-Fi lights > Search my network.
-- Razer and SteelSeries devices through Razer Synapse (Chroma) or SteelSeries GG, while those run.
+- Through the maker's own app, while it runs: Logitech G HUB, ASUS Armoury Crate (Aura),
+  Corsair iCUE (needs Corsair's free iCUESDK.x64_2019.dll in the drivers folder),
+  Razer Synapse (Chroma) and SteelSeries GG.
+- Other RGB apps (SignalRGB, Mystic Light, RGB Fusion, NZXT CAM...) fight LightDeck:
+  LightDeck warns you, and Settings > Other RGB apps can close them.
 - Devices nothing supports are listed in the app under "Found, not controllable".
   "Report a device" there (or in Settings) makes a short list to send so support can be added.
 

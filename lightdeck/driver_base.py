@@ -61,6 +61,9 @@ class Driver:
     pair_hint = ""                # what to do before pairing / adding
     store = {}                    # this driver's saved settings in config.json (set by LightDeck)
 
+    # ---- set by LightDeck before every search, for bridges to other apps ----
+    openrgb_ids = set()           # (vendor, product) USB IDs of the devices OpenRGB drives right now
+
     @classmethod
     def saved(cls):
         """Network lights added in Settings: [{"address", "name", "id", ...}] (kept in config.json)."""

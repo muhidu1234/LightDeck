@@ -37,7 +37,15 @@ the UI and its own drivers for devices OpenRGB lacks. Current version: see `VERS
     Network drivers (`network = True`, saved in `cfg["driver_settings"][Class]`, added in Settings > Wi-Fi
     lights): `wled.py` (UDP 21324 DRGB/DNRGB), `nanoleaf.py` (extControl v2, UDP 60222), `hue.py` (API v1,
     xy colors, 10/s), `govee.py` (LAN API, UDP 4001/4002/4003). Bridges: `razer_chroma.py` (Chroma REST,
-    localhost:54235), `steelseries.py` (GameSense via coreProps.json). None tested on real devices yet.
+    localhost:54235), `steelseries.py` (GameSense via coreProps.json), `logitech.py` (G HUB's LED SDK DLL,
+    path from CLSID {a6519e67-...}\ServerBinary; installed here, G HUB not running), `asus_aura.py`
+    (Armoury Crate COM "aura.sdk.1" via `comhelp.py`, one helper thread owns the COM objects),
+    `corsair.py` (iCUE SDK 4, needs iCUESDK.x64_2019.dll in drivers/: not shipped, not downloaded).
+    Aura/Corsair bridges skip themselves when OpenRGB drives a device of that maker
+    (`Driver.openrgb_ids`). None tested on real devices yet.
+  - `apps.py` - table of other RGB apps (process names, "bridge"/"close"/"ok", tip), process list via
+    Toolhelp; app shows a status-bar warning + Settings > Other RGB apps (with "Close it" = taskkill)
+  - `comhelp.py` - late-bound COM (IDispatch) with ctypes; tested against Scripting.Dictionary/FSO
   - `nethelp.py` - HTTP JSON, UDP, mDNS browse (own parser)
   - `report.py` - "Report a device" text (IPs/user paths scrubbed); `REPO_URL` empty until GitHub exists
   - `usbcapture.py` - "Add support for it": records with USBPcap (elevated ps1), keeps only host->device
@@ -98,5 +106,6 @@ the UI and its own drivers for devices OpenRGB lacks. Current version: see `VERS
   4) "Report a device" -> GitHub issue, handled by the Claude GitHub add-on, fixes approved by the user
   (done 2026-11-24: public repo https://github.com/muhidu1234/LightDeck, labels, Claude app,
   CLAUDE_CODE_OAUTH_TOKEN secret, report.REPO_URL set; the device workflow hasn't had a real run yet), 5) in-app USB recording for new drivers (done), 6) vendor-software bridges:
-  Razer + SteelSeries done (untested); Logitech/Corsair skipped (need their SDK DLLs downloaded: ask first).
+  Razer + SteelSeries done (untested); 1.2 (2026-11-25): Logitech G HUB, ASUS Aura, Corsair iCUE bridges
+  + other-RGB-app warnings. MSI Mystic Light SDK skipped (needs LightDeck to run as admin; OpenRGB drives MSI).
 - Other ideas: music-reactive effects, per-key layout map for the N80 (named keys), more themes.

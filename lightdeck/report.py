@@ -72,6 +72,14 @@ def build(engine):
                      f"type: {', '.join(d['kinds']) or 'unknown'}")
     if not engine.other_devices:
         lines.append("  (none)")
+    import apps
+    lines.append("")
+    lines.append("Other RGB apps running:")
+    running = apps.running_rgb_apps()
+    for name, how, _tip in running:
+        lines.append(f"  - {name}  ({'LightDeck works through it' if how == 'bridge' else how})")
+    if not running:
+        lines.append("  (none)")
     problems = dict(engine.driver_problems)
     errs = list(engine.driver_errors) + list(engine.effect_errors)
     if problems or errs or engine.last_error:
