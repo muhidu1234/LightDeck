@@ -47,7 +47,8 @@ the UI and its own drivers for devices OpenRGB lacks. Current version: see `VERS
 - `build/` - packaging: `make_package.py` (builds .exe with PyInstaller + zip on the Desktop),
   `pkg_src/` (installer .cmd/.ps1, READ ME FIRST, THIRD-PARTY-NOTICES), `licenses/` (GPL texts)
 - `.github/` - device request form + Claude workflows (`claude-device.yml` runs when the owner adds the
-  `device` label; `claude.yml` = @claude mentions). `build/GITHUB-SETUP.md` = the steps still to do with the user.
+  `device` label; `claude.yml` = @claude mentions). `build/GITHUB-SETUP.md` = how it was set up and how requests flow.
+  Repo: https://github.com/muhidu1234/LightDeck (`gh` is at `C:\Program Files\GitHub CLI\gh.exe`).
 - `README.md` (root) - the GitHub page
 - `tools/` - USB reverse-engineering helpers used for the N80 (USBPcap capture, pcap parser,
   byte-diff, on-device pattern finder) and `token_usage.py`
@@ -95,7 +96,7 @@ the UI and its own drivers for devices OpenRGB lacks. Current version: see `VERS
   key rows (done), 2) Windows Dynamic Lighting (LampArray) driver (done, needs a real device to
   confirm), 3) Wi-Fi lights (WLED, Hue, Nanoleaf, Govee) (done, untested on real lights),
   4) "Report a device" -> GitHub issue, handled by the Claude GitHub add-on, fixes approved by the user
-  (app side + .github files done; the GitHub account/repo itself still to set up with the user, see
-  build/GITHUB-SETUP.md), 5) in-app USB recording for new drivers (done), 6) vendor-software bridges:
+  (done 2026-11-24: public repo https://github.com/muhidu1234/LightDeck, labels, Claude app,
+  CLAUDE_CODE_OAUTH_TOKEN secret, report.REPO_URL set; the device workflow hasn't had a real run yet), 5) in-app USB recording for new drivers (done), 6) vendor-software bridges:
   Razer + SteelSeries done (untested); Logitech/Corsair skipped (need their SDK DLLs downloaded: ask first).
 - Other ideas: music-reactive effects, per-key layout map for the N80 (named keys), more themes.
