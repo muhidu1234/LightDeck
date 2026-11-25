@@ -1,7 +1,8 @@
 """LightDeck's Night City window: a side bar with pages, drawn on tkinter canvases (+ Pillow for glow).
 
 Pages: Lights (every light, on/off, live colors) · Light settings (effect, colors, speed... for one light or
-all) · Preview (every LED, live) · Effects (gallery with live samples) · Settings (app options).
+all) · Preview (every LED, live) · Effects (gallery with live samples) · Palettes (ready-made Night City
+palettes + "My palettes" slots you can save, share and use on any light) · Settings (app options).
 Everything is drawn on canvases so it can animate: rain and a skyline behind the pages, a glitching title,
 sliding menu, pages that glitch in. The classic window is still there (Settings > Classic window);
 it is also where splitting cables, LED counts, Wi-Fi lights and device recording live for now.
@@ -17,14 +18,15 @@ import types
 import webbrowser
 import tkinter as tk
 import tkinter.font as tkfont
-from tkinter import colorchooser, simpledialog
+from tkinter import colorchooser, messagebox, simpledialog
 
 from PIL import Image, ImageChops, ImageDraw, ImageFilter, ImageTk
 
 import apps
 import report
 import startup
-from effect_base import PALETTE_PRESETS
+from effect_base import (PALETTE_GROUPS, PALETTE_PRESETS, PALETTE_SLOTS, apply_palette, palette_param,
+                         parse_share_code, share_code)
 from engine import APP_DIR, DRIVERS_DIR, EFFECTS_DIR, FPS_MAX, FPS_MIN, GLOBAL, VERSION
 
 NAVY, PANEL, CARD, CARD_HI, EDGE = "#060a1c", "#0b1230", "#0e1640", "#15205a", "#1f3a7a"
@@ -33,7 +35,7 @@ OFF = "#3a4677"
 SIDE, TICK = 210, 26
 SLIDE_DIST, SLIDE_TIME = 48.0, 0.34        # page change: how far the new page glides in (px) and for how long (s)
 PAGES = [("lights", "Lights"), ("settings", "Light settings"), ("preview", "Preview"), ("effects", "Effects"),
-         ("app", "Settings")]
+         ("palettes", "Palettes"), ("app", "Settings")]
 
 
 def rgb(h):
@@ -73,6 +75,7 @@ class NightCity:
         self.slide = 0.0
         self.bars = []
         self.trans = None
+        self.editing = None       # ready-made palette open in the Palettes page editor
         self._job = None
         self.hover_items = {}
         self.lights_sig = None
@@ -270,9 +273,9 @@ class NightCity:
             s.tag_bind(tag, "<Button-1>", lambda e, k=key: self.show(k))
             s.tag_bind(tag, "<Enter>", lambda e, k=key: (self.nav[k].update(hover=True), s.config(cursor="hand2")))
             s.tag_bind(tag, "<Leave>", lambda e, k=key: (self.nav[k].update(hover=False), s.config(cursor="")))
-        self.link_dot = s.create_oval(26, 400, 34, 408, fill=CYAN, outline="")
-        self.link_text = s.create_text(42, 404, text="Connecting...", anchor="w", fill=DIM, font=self.f(9))
-        self.fps_text = s.create_text(26, 428, text="", anchor="w", fill=LAV, font=(self.mono, 9))
+        self.link_dot = s.create_oval(26, 452, 34, 460, fill=CYAN, outline="")
+        self.link_text = s.create_text(42, 456, text="Connecting...", anchor="w", fill=DIM, font=self.f(9))
+        self.fps_text = s.create_text(26, 480, text="", anchor="w", fill=LAV, font=(self.mono, 9))
 
     def build_ticker(self):
         t = self.tick
@@ -349,6 +352,7 @@ class NightCity:
         y_frac = v.yview()[0] if keep_scroll else 0.0
         if page != self.page and not getattr(self, "_keep_message", False):
             self.message = ""                    # a notice belongs to the page it was shown on
+            self.editing = None
         self._keep_message = False
         self.page = page
         v.delete("page")
@@ -660,17 +664,25 @@ class NightCity:
                     commit(colors + [res[1]])
             self.button(ax, y + 2, "+", add, small=True)
         y += 40
-        steps = 60                                                            # the blend between them
-        for k in range(steps):
-            f = k / (steps - 1) * (len(colors) - 1)
-            i = min(int(f), max(len(colors) - 2, 0))
-            col = colors[0] if len(colors) == 1 else hexc(mix(rgb(colors[i]), rgb(colors[i + 1]), f - i))
-            v.create_rectangle(x + k * w / steps, y, x + (k + 1) * w / steps + 1, y + 6, fill=col, outline="",
-                               tags="page")
+        v.create_image(x, y, image=self.blend_image(colors, int(w), 6), anchor="nw", tags="page")   # the blend
         y += 16
         self.text(x, y + 6, "Click a color to change it  ·  right-click to remove it", 9, DIM)
         y += 24
-        y = self.chips(x, y, list(PALETTE_PRESETS), None, lambda n: commit(list(PALETTE_PRESETS[n])), w)
+        slots = [s for s in self.engine.palette_slots() if s]
+        if slots:
+            self.text(x, y + 6, "MY PALETTES", 9, LAV)
+            y = self.chips(x, y + 20, [s["name"] for s in slots], None,
+                           lambda n: commit(next(s["colors"] for s in slots if s["name"] == n)), w)
+
+        def save():
+            free = [i for i, s in enumerate(self.engine.palette_slots()) if s is None]
+            if not free:
+                self.say(f"All {PALETTE_SLOTS} slots are full: clear one on the Palettes page first.")
+                return
+            self.save_slot(free[0], colors)
+        bx = x
+        bx += self.button(bx, y, "All palettes", lambda: self.show("palettes"), small=True) + 8
+        bx += self.button(bx, y, "Save to My palettes", save, small=True) + 8
 
         def vivid():
             out = []
@@ -683,8 +695,286 @@ class NightCity:
                 r, g, b = colorsys.hsv_to_rgb(h, max(s, .97), max(val, .9))
                 out.append(hexc((r * 255, g * 255, b * 255)))
             commit(out)
-        self.button(x, y, "Make vivid", vivid, small=True)
+        self.button(bx, y, "Make vivid", vivid, small=True)
         return y + 34
+
+    # ---------- Palettes ----------
+    def blend_image(self, colors, w, h):
+        """A smooth color bar through `colors`, as one picture (cheap to redraw)."""
+        key = ("blend", tuple(colors), w, h)
+        if key not in self.cache:
+            n, w = len(colors), max(2, w)
+            px = []
+            for k in range(w):
+                f = k / (w - 1) * (n - 1)
+                i = min(int(f), max(n - 2, 0))
+                c = rgb(colors[0]) if n == 1 else mix(rgb(colors[i]), rgb(colors[i + 1]), f - i)
+                px.append(tuple(int(c_) for c_ in c))
+            img = Image.new("RGB", (w, 1))
+            img.putdata(px)
+            self.cache[key] = ImageTk.PhotoImage(img.resize((w, max(1, h))))
+        return self.cache[key]
+
+    def palette_target(self):
+        """(light key, effect) the Palettes page changes: the chosen light if it has its own effect,
+        otherwise All lights."""
+        t = self.target
+        if t != GLOBAL and (not self.zone(t) or not self.engine.uses_own_effect(t)):
+            t = GLOBAL
+        return t, self.engine.get_effect(t)
+
+    def current_palette(self):
+        _, eff = self.palette_target()
+        key = palette_param(eff) if eff else None
+        return [c.lower() for c in eff.values.get(key) or []] if key else None
+
+    def use_palette(self, name, colors):
+        t, eff = self.palette_target()
+        if eff is None or not apply_palette(eff, colors):
+            self.say(f"{eff.name if eff else 'This effect'} has no colors to change: pick an effect with a palette "
+                     f"first (see the list above).")
+            return
+        self.say(f"{name} is now on {'All lights' if t == GLOBAL else self.target_name()} ({eff.name}).")
+
+    def page_palettes(self):
+        eng = self.engine
+        x, w = self.x0, self.cw
+        t, eff = self.palette_target()
+        tname = "All lights" if t == GLOBAL else self.target_name()
+        y = self.head("PALETTES", f"click one to use it on: {tname}")
+        if eff is None or not palette_param(eff):
+            fits = sorted(n for n, cls in eng.effect_classes.items() if palette_param(cls))
+            self.text(x, y, f"{eff.name if eff else 'This effect'} has no colors to pick. Palettes work with: "
+                            f"{', '.join(fits)}.", 10, RED, width=w)
+        else:
+            self.text(x, y, f"Changes the colors of {eff.name} on {tname}. To color another light, pick it in "
+                            f"Light settings first.", 10, DIM, width=w)
+        y += 34
+        cur = self.current_palette()
+        rows = {orig: (name, cols, changed) for g in eng.palette_groups().values() for orig, name, cols, changed in g}
+        if self.editing in rows:                                               # the palette being edited
+            y = self.palette_editor(x, y, w, self.editing, *rows[self.editing]) + 18
+        # your own palettes
+        self.text(x, y + 6, "MY PALETTES", 10, PINK, bold=True)
+        self.text(x + 124, y + 6, "save your own colors in a slot: every light and every effect can use them", 9, DIM)
+        y += 28
+        cols = max(2, min(4, int(w // 300)))
+        cw = (w - (cols - 1) * 14) / cols
+        for i, slot in enumerate(eng.palette_slots()):
+            self.slot_card(i, slot, x + (i % cols) * (cw + 14), y + (i // cols) * 142, cw, cur)
+        y += ((PALETTE_SLOTS + cols - 1) // cols) * 142 + 12
+        # ready-made ones
+        cols = max(2, min(4, int(w // 230)))
+        cw = (w - (cols - 1) * 14) / cols
+        for group, pals in eng.palette_groups().items():
+            self.text(x, y + 6, group.upper(), 10, PINK, bold=True)
+            if group == "Classic":
+                self.text(x + 90, y + 6, "click a palette to use it  ·  Edit to rename it or change its colors", 9, DIM)
+            y += 28
+            for k, (orig, name, colors, changed) in enumerate(pals):
+                self.preset_card(orig, name, colors, changed, x + (k % cols) * (cw + 14), y + (k // cols) * 90, cw,
+                                 cur)
+            y += ((len(pals) + cols - 1) // cols) * 90 + 12
+        return y
+
+    def preset_card(self, orig, name, colors, changed, x, y, w, cur):
+        v, tag = self.view, self.uid()
+        on = cur is not None and [c.lower() for c in colors] == cur
+        editing = orig == self.editing
+        poly = self.card(x, y, w, 76, tags=(tag,), pulse=False, fill=CARD_HI if on or editing else CARD)
+        if editing:
+            v.itemconfig(poly, outline=CYAN)
+        self.text(x + 18, y + 22, name + ("  ✎" if changed else ""), 11, PINK if on else WHITE, bold=True,
+                  tags=(tag,), width=w - 90)
+        v.create_image(x + 18, y + 40, image=self.blend_image(colors, int(w - 36), 18), anchor="nw",
+                       tags=("page", tag))
+        self.bind_click(tag, lambda: self.use_palette(name, colors),
+                        lambda hov: v.itemconfig(poly, outline=CYAN if hov or editing else EDGE))
+        self.button(x + w - 62, y + 9, "Edit", lambda: self.edit_preset(orig), small=True)
+
+    def edit_preset(self, orig):
+        if self.page != "palettes":
+            self.message = ""
+            self.page = "palettes"                         # (so show() doesn't close the editor as a page change)
+        self.editing = orig
+        self.show("palettes", instant=True)              # the editor is at the top of the page
+
+    def palette_editor(self, x, y, w, orig, name, colors, changed):
+        """Card to rename a ready-made palette and change its colors (kept in your settings)."""
+        v, eng = self.view, self.engine
+        top = y
+        self.card(x, y, w, 10, fill=CARD_HI)
+        self.text(x + 24, y + 26, "EDITING", 9, LAV)
+        t = self.text(x + 90, y + 26, name, 14, PINK, bold=True)
+        if changed:
+            self.text(v.bbox(t)[2] + 12, y + 27, f"(was: {orig})" if name != orig else "(your colors)", 9, DIM)
+        y += 50
+
+        def put(cols):
+            eng.edit_palette(orig, colors=cols)
+            self.rerender()
+        for k, col in enumerate(colors):                                       # color diamonds
+            tag = self.uid()
+            sx = x + 24 + k * 40
+            v.create_polygon(sx + 16, y, sx + 32, y + 16, sx + 16, y + 32, sx, y + 16, fill=col, outline="",
+                             tags=("page", tag))
+
+            def edit(k=k):
+                res = colorchooser.askcolor(color=colors[k], title=f"{name} - color {k + 1}", parent=self.root)
+                if res and res[1]:
+                    put(colors[:k] + [res[1]] + colors[k + 1:])
+
+            def remove(_e=None, k=k):
+                if len(colors) > 1:
+                    put(colors[:k] + colors[k + 1:])
+            self.bind_click(tag, edit)
+            v.tag_bind(tag, "<Button-3>", remove)
+        if len(colors) < 16:
+            def add():
+                res = colorchooser.askcolor(color=colors[-1], title=f"{name} - add a color", parent=self.root)
+                if res and res[1]:
+                    put(colors + [res[1]])
+            self.button(x + 24 + len(colors) * 40, y + 3, "+", add, small=True)
+        y += 44
+        v.create_image(x + 24, y, image=self.blend_image(colors, int(w - 48), 10), anchor="nw", tags="page")
+        y += 18
+        self.text(x + 24, y + 8, "Click a color to change it  ·  right-click to remove it  ·  + adds one", 9, DIM)
+        y += 26
+
+        def rename():
+            new = simpledialog.askstring("Rename palette", "New name (empty = original name):", initialvalue=name,
+                                         parent=self.root)
+            if new is not None:
+                eng.edit_palette(orig, name=new)
+                self.rerender()
+
+        def copy():
+            free = [i for i, s in enumerate(eng.palette_slots()) if s is None]
+            if not free:
+                self.say(f"All {PALETTE_SLOTS} slots are full: clear one first.")
+                return
+            eng.set_palette_slot(free[0], name, colors)
+            self.say(f"Copied \"{name}\" to slot {free[0] + 1}.")
+
+        def reset():
+            eng.edit_palette(orig, reset=True)
+            self.say(f"{orig} is back to its original name and colors.")
+
+        def done():
+            self.editing = None
+            self.rerender()
+        bx = x + 24
+        bx += self.button(bx, y, "Use it", lambda: self.use_palette(name, colors), accent=True, small=True) + 8
+        bx += self.button(bx, y, "Rename", rename, small=True) + 8
+        bx += self.button(bx, y, "Copy to My palettes", copy, small=True) + 8
+        if changed:
+            bx += self.button(bx, y, "Reset to original", reset, small=True) + 8
+        self.button(bx, y, "Done", done, small=True)
+        y += 44
+        self.resize_card(top, x, w, y - top)
+        return y
+
+    def slot_card(self, i, slot, x, y, w, cur):
+        v, eng = self.view, self.engine
+        if slot is None:
+            self.card(x, y, w, 128, pulse=False)
+            self.text(x + 18, y + 22, f"EMPTY SLOT {i + 1}", 10, DIM, bold=True)
+            v.create_rectangle(x + 18, y + 42, x + w - 18, y + 62, outline=EDGE, dash=(4, 3), tags="page")
+            bx = x + 18
+            bx += self.button(bx, y + 84, "Save current colors", lambda: self.save_slot(i), small=True) + 8
+            self.button(bx, y + 84, "Paste code", lambda: self.paste_slot(i), small=True)
+            return
+        name, colors = slot["name"], slot["colors"]
+        on = cur is not None and [c.lower() for c in colors] == cur
+        self.card(x, y, w, 128, fill=CARD_HI if on else CARD)
+        self.text(x + 18, y + 20, name, 11, PINK if on else WHITE, bold=True)
+        v.create_image(x + 18, y + 34, image=self.blend_image(colors, int(w - 36), 6), anchor="nw", tags="page")
+
+        def put(cols):
+            eng.set_palette_slot(i, name, cols)
+            self.rerender()
+        fit = max(1, int((w - 36 - 30) // 26))                            # color diamonds that fit on the card
+        for k, col in enumerate(colors[:fit]):
+            tag = self.uid()
+            sx, sy = x + 18 + k * 26, y + 48
+            v.create_polygon(sx + 11, sy, sx + 22, sy + 11, sx + 11, sy + 22, sx, sy + 11, fill=col, outline="",
+                             tags=("page", tag))
+
+            def edit(k=k):
+                res = colorchooser.askcolor(color=colors[k], title=f"{name} - color {k + 1}", parent=self.root)
+                if res and res[1]:
+                    put(colors[:k] + [res[1]] + colors[k + 1:])
+
+            def remove(_e=None, k=k):
+                if len(colors) > 1:
+                    put(colors[:k] + colors[k + 1:])
+            self.bind_click(tag, edit)
+            v.tag_bind(tag, "<Button-3>", remove)
+        ax = x + 18 + min(len(colors), fit) * 26
+        if len(colors) > fit:
+            self.text(ax, y + 59, f"+{len(colors) - fit}", 9, DIM)
+        elif len(colors) < 16:
+            def add():
+                res = colorchooser.askcolor(color=colors[-1], title=f"{name} - add a color", parent=self.root)
+                if res and res[1]:
+                    put(colors + [res[1]])
+            self.button(ax, y + 49, "+", add, small=True)
+        bx = x + 18
+        bx += self.button(bx, y + 86, "Use", lambda: self.use_palette(name, colors), accent=True, small=True) + 6
+        bx += self.button(bx, y + 86, "Rename", lambda: self.rename_slot(i), small=True) + 6
+        bx += self.button(bx, y + 86, "Share", lambda: self.share_slot(i), small=True) + 6
+        self.button(bx, y + 86, "Clear", lambda: self.clear_slot(i), small=True)
+
+    def save_slot(self, i, colors=None):
+        """Save colors (default: the current effect's palette) into slot i, asking for a name."""
+        if colors is None:
+            _, eff = self.palette_target()
+            key = palette_param(eff) if eff else None
+            colors = list(eff.values.get(key) or []) if key else []
+            colors = colors or list(PALETTE_PRESETS["Night City"])
+        name = simpledialog.askstring("My palettes", "Name for this palette:", initialvalue=f"My palette {i + 1}",
+                                      parent=self.root)
+        if name is None:
+            return
+        self.engine.set_palette_slot(i, name, colors)
+        self.say(f"Saved in slot {i + 1}. Every light and effect can use it now (Palettes page, or the My "
+                 f"palettes buttons under an effect's colors).")
+
+    def paste_slot(self, i):
+        try:
+            text = self.root.clipboard_get()
+        except tk.TclError:
+            text = ""
+        got = parse_share_code(text)
+        if not got:
+            self.say("Copy a palette code first: a line that starts with \"LightDeck palette:\" (friends get it "
+                     "with Share).")
+            return
+        self.engine.set_palette_slot(i, got[0], got[1])
+        self.say(f"Added \"{got[0]}\" to slot {i + 1}.")
+
+    def share_slot(self, i):
+        slot = self.engine.palette_slots()[i]
+        if slot:
+            self.root.clipboard_clear()
+            self.root.clipboard_append(share_code(slot["name"], slot["colors"]))
+            self.say("Palette code copied. Send it to a friend: they click Paste code on an empty slot.")
+
+    def rename_slot(self, i):
+        slot = self.engine.palette_slots()[i]
+        if not slot:
+            return
+        new = simpledialog.askstring("Rename", "New name:", initialvalue=slot["name"], parent=self.root)
+        if new and new.strip():
+            self.engine.set_palette_slot(i, new, slot["colors"])
+            self.rerender()
+
+    def clear_slot(self, i):
+        slot = self.engine.palette_slots()[i]
+        if slot and messagebox.askyesno("Clear slot", f"Remove \"{slot['name']}\" from slot {i + 1}?",
+                                        parent=self.root):
+            self.engine.set_palette_slot(i, None, None)
+            self.rerender()
 
     # ---------- Preview ----------
     def page_preview(self):

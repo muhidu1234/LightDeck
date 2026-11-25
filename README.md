@@ -16,6 +16,11 @@ window, and adds its own drivers for devices OpenRGB doesn't cover.
   (Chroma) and SteelSeries GG (GameSense), when those apps are running.
 - **Its own drivers**, e.g. the RK N80 keyboard, made from a recording of what the keyboard's own app sends.
 
+## Color palettes
+24 ready-made palettes in three groups (Classic, City districts, Night City moods), 8 slots for your own,
+and share codes to swap palettes with friends. Every palette can be renamed and recolored on the
+*Palettes* page; a palette works with every effect that has colors.
+
 ## Install
 Download the latest `LightDeck-<version>-Windows.zip` from **Releases**, extract it and run
 `Install LightDeck.cmd`. Full instructions are in `READ ME FIRST.txt` inside the zip.

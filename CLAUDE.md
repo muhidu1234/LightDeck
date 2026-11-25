@@ -31,6 +31,8 @@ the UI and its own drivers for devices OpenRGB lacks. Current version: see `VERS
     background animations pause during it: Tk redraws the union of all changed areas, so anything
     moving across the page makes every frame a full redraw (~95 ms with ~900 items). Animation is
     time-based (dt). Split/LED count/Wi-Fi/recording are still only in the Classic window.
+    Palettes page (1.22): `PALETTE_GROUPS` presets (editable: `engine.edit_palette` -> `cfg["palette_edits"]`),
+    8 user slots (`cfg["palette_slots"]`), share codes; `apply_palette` flips the effect's `show_if` switch.
   - `hud.py` - animated title, neon stripe, telemetry panel (graphs, spectrum, data links)
   - `effect_base.py` - `Effect`/`Param` base classes + helpers (hsv, mix, gradient, palette, vivid,
     `NIGHT_CITY`, `NIGHT_CITY_LED`, `PALETTE_PRESETS`)
@@ -114,5 +116,5 @@ the UI and its own drivers for devices OpenRGB lacks. Current version: see `VERS
   (done 2026-11-24: public repo https://github.com/muhidu1234/LightDeck, labels, Claude app,
   CLAUDE_CODE_OAUTH_TOKEN secret, report.REPO_URL set; the device workflow hasn't had a real run yet), 5) in-app USB recording for new drivers (done), 6) vendor-software bridges:
   Razer + SteelSeries done (untested); 1.2 (2026-11-25): Logitech G HUB, ASUS Aura, Corsair iCUE bridges
-  + other-RGB-app warnings. 1.21 (2026-11-25): Night City window becomes the default. MSI Mystic Light SDK skipped (needs LightDeck to run as admin; OpenRGB drives MSI).
+  + other-RGB-app warnings. 1.21 (2026-11-25): Night City window becomes the default. 1.22 (2026-11-25): Cyberpunk palettes, slots, editable presets. MSI Mystic Light SDK skipped (needs LightDeck to run as admin; OpenRGB drives MSI).
 - Other ideas: music-reactive effects, per-key layout map for the N80 (named keys), more themes.

@@ -141,19 +141,88 @@ def palette(colors, x):
     return mix(colors[i], colors[(i + 1) % n], x - int(x))
 
 
-# Ready-made palettes shown in the palette editor's "Presets" menu
-PALETTE_PRESETS = {
-    "Night City": ["#00b4ff", "#003cff", "#5a00ff", "#ff008c"],
-    "Rain Window": ["#001282", "#003cff", "#00b4ff", "#5a00ff"],
-    "Neon Pink": ["#ff008c", "#ff0028", "#9600ff", "#003cff"],
-    "Rainbow": ["#ff0000", "#ff8800", "#ffee00", "#00ff44", "#00ccff", "#3355ff", "#aa00ff"],
-    "Fire": ["#ff2000", "#ff6a00", "#ffb300", "#ffee88"],
-    "Ocean": ["#002a8f", "#0077ff", "#00d5ff", "#00ffcc"],
-    "Vaporwave": ["#ff00c8", "#00e6ff", "#8c00ff", "#ff5ca0"],
-    "Toxic": ["#39ff14", "#00ff9c", "#d4ff00", "#00b36b"],
-    "Arasaka Red": ["#ff003c", "#b2314b", "#ff5a5a", "#5a0010"],
-    "Ice": ["#ffffff", "#bdeaff", "#65bef7", "#3082dd"],
+# Ready-made palettes, in groups. Colors are saturated on purpose: pastels look white on real LEDs.
+PALETTE_GROUPS = {
+    "Classic": {
+        "Night City": ["#00b4ff", "#003cff", "#5a00ff", "#ff008c"],
+        "Rain Window": ["#001282", "#003cff", "#00b4ff", "#5a00ff"],
+        "Neon Pink": ["#ff008c", "#ff0028", "#9600ff", "#003cff"],
+        "Rainbow": ["#ff0000", "#ff8800", "#ffee00", "#00ff44", "#00ccff", "#3355ff", "#aa00ff"],
+        "Fire": ["#ff2000", "#ff6a00", "#ffb300", "#ffee88"],
+        "Ocean": ["#002a8f", "#0077ff", "#00d5ff", "#00ffcc"],
+        "Vaporwave": ["#ff00c8", "#00e6ff", "#8c00ff", "#ff5ca0"],
+        "Toxic": ["#39ff14", "#00ff9c", "#d4ff00", "#00b36b"],
+        "Arasaka Red": ["#ff003c", "#b2314b", "#ff5a5a", "#5a0010"],
+        "Ice": ["#ffffff", "#bdeaff", "#65bef7", "#3082dd"],
+    },
+    # one for each part of the city
+    "City districts": {
+        "Watson Market": ["#ff0066", "#ff7a00", "#00d5ff", "#7a00ff"],
+        "Japantown Lanterns": ["#ff0030", "#ff006a", "#ffae00", "#ff3d00"],
+        "Kabuki Alleys": ["#ff00b4", "#b400ff", "#00ffd5", "#ff0050"],
+        "Corpo Plaza": ["#001a8c", "#003cff", "#0096ff", "#00e1ff"],
+        "Heywood Murals": ["#ffd000", "#ff00a0", "#00b4ff", "#00ff6a"],
+        "Pacifica Sunset": ["#6a00ff", "#ff0080", "#ff2a00", "#ff6a00"],
+        "Afterlife Bar": ["#ff0028", "#8c00ff", "#ff0064", "#3c00b4"],
+        "Badlands Dust": ["#ff2800", "#ff5a00", "#ffa000", "#c83c00"],
+    },
+    # moods from around the city
+    "Night City moods": {
+        "Netrunner": ["#00ff3c", "#00ff9c", "#00ffd0", "#0078ff"],
+        "Chrome Clinic": ["#00f0ff", "#0050ff", "#a000ff", "#00ffa0"],
+        "Glitch Yellow": ["#ffe600", "#00e5ff", "#ff003c", "#ff9d00"],
+        "Police Lights": ["#ff0014", "#0028ff", "#ff0050", "#0078ff"],
+        "Acid Rain": ["#b4ff00", "#00ff78", "#00b4ff", "#5a00ff"],
+        "Blackwall": ["#ff0014", "#5a0000", "#ff3c00", "#8c0028"],
+    },
 }
+
+# every ready-made palette by name (the palette editor's "Presets")
+PALETTE_PRESETS = {name: cols for group in PALETTE_GROUPS.values() for name, cols in group.items()}
+
+PALETTE_SLOTS = 8          # how many of your own palettes LightDeck keeps ("My palettes")
+SHARE_PREFIX = "LightDeck palette:"
+
+
+def palette_param(effect):
+    """The key of the effect's palette setting, or None if it has no palette."""
+    for key, p in getattr(effect, "params", {}).items():
+        if p.kind == "palette":
+            return key
+    return None
+
+
+def apply_palette(effect, colors):
+    """Put `colors` into the effect's palette setting and switch the effect over to using it (e.g. color mode
+    "Palette", "Custom Palette", "Use My Palette"). Returns the key that was set, or None."""
+    key = palette_param(effect)
+    if key is None:
+        return None
+    effect.values[key] = list(colors)
+    for ctl, want in (effect.params[key].show_if or {}).items():
+        if ctl in effect.values:
+            effect.values[ctl] = want[0] if isinstance(want, (list, tuple)) else want
+    return key
+
+
+def share_code(name, colors):
+    """A line of text a friend can paste into their own LightDeck."""
+    return f"{SHARE_PREFIX} {name.replace('|', ' ')} | {' '.join(colors)}"
+
+
+def parse_share_code(text):
+    """(name, colors) from a share_code() line, or None if it isn't one."""
+    text = (text or "").strip()
+    if not text.startswith(SHARE_PREFIX) or "|" not in text:
+        return None
+    name, _, cols = text[len(SHARE_PREFIX):].rpartition("|")
+    out = []
+    for c in cols.split():
+        c = c.strip().lower()
+        if len(c) == 7 and c[0] == "#" and all(ch in "0123456789abcdef" for ch in c[1:]):
+            out.append(c)
+    name = " ".join(name.split())[:28] or "Shared palette"
+    return (name, out[:16]) if out else None
 
 # Colors from a rainy Night City scene (matches the Cyberpunk theme)
 NIGHT_CITY = {
@@ -206,4 +275,5 @@ def zone_random(zone, salt=0):
 
 __all__ = ["Param", "Effect", "clamp", "hsv", "hex_to_rgb", "scale", "mix", "add",
            "gradient", "palette", "NIGHT_CITY", "NIGHT_CITY_LED", "vivid", "PALETTE_PRESETS",
+           "PALETTE_GROUPS",
            "zone_random", "math", "random"]

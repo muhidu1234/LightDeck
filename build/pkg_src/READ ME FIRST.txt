@@ -1,4 +1,4 @@
-LightDeck 1.21 - one app for all your RGB
+LightDeck 1.22 - one app for all your RGB
 ==========================================
 
 INSTALL
@@ -16,8 +16,10 @@ FIRST START
   PawnIO driver from https://pawnio.eu for RAM / SMBus lighting.
 - A welcome window explains the rest (ARGB header LED counts, effects, themes).
 - LightDeck opens in the animated Night City window: a menu on the left (Lights, Light settings,
-  Preview, Effects, Settings). For LED counts, splitting a cable, Wi-Fi lights and recording a new
+  Preview, Effects, Palettes, Settings). For LED counts, splitting a cable, Wi-Fi lights and recording a new
   device, use Settings > Classic window (switch back with "Switch to the new look").
+- Palettes: Cyberpunk color sets for your effects. Edit any of them (name and colors), or save
+  your own in the 8 "My palettes" slots and share them with friends as a code.
 
 WHAT WORKS
 - Anything OpenRGB 1.1 supports: most motherboards, ARGB headers, RAM, GPUs, many keyboards,

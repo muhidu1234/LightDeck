@@ -5,7 +5,7 @@ import os
 import threading
 import tkinter as tk
 import webbrowser
-from tkinter import colorchooser, simpledialog, ttk
+from tkinter import colorchooser, messagebox, simpledialog, ttk
 import tkinter.font as tkfont
 
 import time
@@ -1209,16 +1209,35 @@ class App:
             self.root.after(10, draw_bar)
 
         bar.bind("<Configure>", lambda e: draw_bar())
-        presets = ttk.Combobox(tools, values=list(PALETTE_PRESETS), state="readonly", width=16, font=self.ui)
+        mine = {f"★ {s['name']}": s["colors"] for s in self.engine.palette_slots() if s}   # My palettes first
+        choices = {**mine, **self.engine.palette_presets()}
+        presets = ttk.Combobox(tools, values=list(choices), state="readonly", width=20, font=self.ui)
         presets.set("Load a preset...")
         presets.pack(side="left")
 
         def load_preset(_=None):
-            state["colors"] = list(PALETTE_PRESETS[presets.get()])
+            state["colors"] = list(choices[presets.get()])
             presets.set("Load a preset...")
             commit()
 
         presets.bind("<<ComboboxSelected>>", load_preset)
+
+        def save_mine():
+            free = [i for i, s in enumerate(self.engine.palette_slots()) if s is None]
+            if not free:
+                messagebox.showinfo("My palettes", "All slots are full. Clear one in the new look's Palettes page.",
+                                    parent=self.root)
+                return
+            name = simpledialog.askstring("My palettes", "Name for this palette:",
+                                          initialvalue=f"My palette {free[0] + 1}", parent=self.root)
+            if name is not None:
+                self.engine.set_palette_slot(free[0], name, state["colors"])
+                mine[f"★ {name.strip() or 'My palette'}"] = list(state["colors"])
+                choices.clear()
+                choices.update({**mine, **self.engine.palette_presets()})
+                presets.configure(values=list(choices))
+
+        ttk.Button(tools, text="Save to My palettes", command=save_mine).pack(side="left", padx=(8, 0))
 
         def make_vivid():
             # keep each hue, but push it to full saturation and brightness so LEDs don't look white

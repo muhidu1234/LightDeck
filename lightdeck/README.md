@@ -59,7 +59,13 @@ then copy `dist\LightDeck\LightDeck.exe` and `dist\LightDeck\_internal` over the
 ## Two windows
 - **Night City** (default since 1.21): animated window with a menu on the left - *Lights* (every
   light with a live preview, on/off, Blink), *Light settings* (effect and its settings for All lights
-  or one light), *Preview*, *Effects* (gallery with live samples; click one to use it) and *Settings*.
+  or one light), *Preview*, *Effects* (gallery with live samples; click one to use it), *Palettes* and *Settings*.
+- **Palettes** (1.22): 24 ready-made palettes in three groups (Classic, City districts, Night City moods).
+  Click one to use it on the chosen light (or All lights). **Edit** renames it or changes its colors
+  (click a color to change it, right-click to remove, **+** to add; **Reset to original** undoes it).
+  *My palettes* has 8 slots for your own: save the current colors, rename, share as a code
+  (`LightDeck palette: name | #hex #hex`) or paste a friend's code. Saved as `palette_slots` and
+  `palette_edits` in config.json; the Classic window's preset list shows them too.
 - **Classic**: the original window with every tool (LED count, splitting, Wi-Fi lights, recording).
   Night City > Settings > *Classic window*; back with Settings > Window style > *Switch to the new look*.
   The choice is saved as `"ui"` in config.json.

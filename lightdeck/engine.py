@@ -18,7 +18,7 @@ if str(APP_DIR) not in sys.path:
 from effect_base import Effect  # noqa: E402
 from driver_base import load_drivers  # noqa: E402
 
-VERSION = "1.21"
+VERSION = "1.22"
 
 
 def _user_dir():
@@ -131,6 +131,8 @@ DEFAULT_CONFIG = {
     "overrides": [],       # light keys that use their own effect instead of the global one
     "disabled": [],        # light keys that stay dark
     "targets": {GLOBAL: {"effect": "Rainbow Strips", "values": {}}},
+    "palette_slots": [],   # your own palettes: [{"name", "colors"} or None, ...] (PALETTE_SLOTS of them)
+    "palette_edits": {},   # ready-made palette name -> {"name": your name, "colors": your colors}
 }
 
 
@@ -310,6 +312,71 @@ class Engine:
         if z.part is None:
             return hw
         return f"{hw} · {self.display_name(z.key, z.name)}"
+
+    # ---------- your own palettes ("My palettes" slots) ----------
+    def palette_slots(self):
+        """Always PALETTE_SLOTS entries: {"name", "colors"} for a saved palette, None for an empty slot."""
+        from effect_base import PALETTE_SLOTS
+        slots = self.cfg.setdefault("palette_slots", [])
+        out = []
+        for s in (slots + [None] * PALETTE_SLOTS)[:PALETTE_SLOTS]:
+            ok = isinstance(s, dict) and s.get("colors")
+            out.append({"name": str(s.get("name") or "My palette"), "colors": list(s["colors"])} if ok else None)
+        return out
+
+    def set_palette_slot(self, i, name=None, colors=None):
+        """Save a palette into slot i (colors=None empties it). Saved to config.json right away."""
+        with self.lock:
+            slots = self.palette_slots()
+            if colors:
+                slots[i] = {"name": (name or "My palette").strip()[:28] or "My palette", "colors": list(colors)[:16]}
+            else:
+                slots[i] = None
+            self.cfg["palette_slots"] = slots
+        self.save_config()
+
+    def palette_groups(self):
+        """The ready-made palettes with your changes: {group: [(original name, name, colors, changed?)]}."""
+        from effect_base import PALETTE_GROUPS
+        edits = self.cfg.setdefault("palette_edits", {})
+        out = {}
+        for group, pals in PALETTE_GROUPS.items():
+            rows = []
+            for orig, cols in pals.items():
+                e = edits.get(orig) if isinstance(edits.get(orig), dict) else {}
+                rows.append((orig, e.get("name") or orig, list(e.get("colors") or cols), bool(e)))
+            out[group] = rows
+        return out
+
+    def palette_presets(self):
+        """{name: colors} of every ready-made palette, with your renames and color changes."""
+        return {name: cols for rows in self.palette_groups().values() for _, name, cols, _ in rows}
+
+    def edit_palette(self, orig, name=None, colors=None, reset=False):
+        """Rename and/or recolor a ready-made palette (reset=True puts it back). Saved right away."""
+        from effect_base import PALETTE_PRESETS
+        if orig not in PALETTE_PRESETS:
+            return
+        with self.lock:
+            edits = self.cfg.setdefault("palette_edits", {})
+            e = {} if reset else dict(edits.get(orig) or {})
+            if name is not None:
+                name = name.strip()[:28]
+                if name and name != orig:
+                    e["name"] = name
+                else:
+                    e.pop("name", None)
+            if colors:
+                colors = [c.lower() for c in colors][:16]
+                if colors != [c.lower() for c in PALETTE_PRESETS[orig]]:
+                    e["colors"] = colors
+                else:
+                    e.pop("colors", None)
+            if e:
+                edits[orig] = e
+            else:
+                edits.pop(orig, None)
+        self.save_config()
 
     # ---------- effects ----------
     def effect_names(self):
